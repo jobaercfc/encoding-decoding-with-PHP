@@ -6,6 +6,12 @@
  * Time: 10:21 AM
  */
 include "db.php";
+session_start();
+if(isset($_SESSION["uid"])){
+    $uid = $_SESSION["uid"];
+}else{
+    header("location : login.php");
+}
 ?>
 <html>
     <head><title>Encoding</title></head>
@@ -15,6 +21,9 @@ include "db.php";
     <?php //  display  file  upload  form
 //  check  uploaded  file  size
     if(isset($_POST["send"])){
+        $sender = $uid;
+        $receiver = $_POST["user"];
+
         if  ($_FILES['encodedFile']['size']  ==  0)  {
             die("ERROR:  Zero  byte  file  upload");
         }
@@ -36,7 +45,7 @@ include "db.php";
 
         echo  "Encoded  "  .  $_FILES['encodedFile']['name']. " to ".$_FILES['decodedFile']['name'];
 
-        $sql = "insert into encode(encodedFile, decodedFile) values ('".$_FILES['encodedFile']['name']."', '".$_FILES['decodedFile']['name']."')";
+        $sql = "insert into encode(encodedFile, decodedFile, senderId, receiverId) values ('".$_FILES['encodedFile']['name']."', '".$_FILES['decodedFile']['name']."', '$sender', '$receiver')";
         $run = $conn->prepare($sql);
         $run->execute();
     }
@@ -52,8 +61,51 @@ include "db.php";
         <input type="file" name="decodedFile"><br>
         <label>Add a message</label><br>
         <input type="text" name="message"><br>
+        <label>Send To : </label><br>
+        <select name="user">
+            <?php
+                $sql = "Select * from users where id != '$uid'";
+
+                $run = $conn->prepare($sql);
+                $run->execute();
+
+                if($run->rowCount() > 0){
+                    while ($row = $run->fetch(PDO::FETCH_ASSOC)){
+                        $id = $row["id"];
+                        $name = $row["name"];
+                        echo '<option value="'.$id.'">'.$name.'</option>';
+                    }
+                }
+
+            ?>
+
+        </select><br>
         <input type="submit" name="send">
     </form>
+
+    <br><br>
+    <hr>
+
+    <?php
+        $sql = "Select * from (encode inner join users on (encode.senderId = users.id)) where receiverId = '$uid'";
+
+        $run = $conn->prepare($sql);
+        $run->execute();
+
+        if($run->rowCount() > 0){
+            while ($row = $run->fetch(PDO::FETCH_ASSOC)){
+                $senderName = $row["name"];
+                $encodedFile = $row["encodedFile"];
+                $decodedFile = $row["decodedFile"];
+
+                echo '
+                    <p>Message from '.$senderName.'</p>
+                    <img src="decodedFile/'.$decodedFile.'" width="200px" height="200px">
+                    <p><a href="decode.php?file='.$decodedFile.'">Decode this file</a></p>
+                ';
+            }
+        }
+    ?>
 
 </body>
 </html>

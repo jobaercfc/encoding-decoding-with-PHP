@@ -7,7 +7,7 @@
  */
 include "db.php";
 
-if(isset($_GET["submit"])){
+if(isset($_GET["file"])){
     $file = $_GET["file"];
 
     $sql = "Select encodedFile from encode where decodedFile = '$file'";
@@ -15,17 +15,19 @@ if(isset($_GET["submit"])){
     $run->execute();
 
     if($run->rowCount() > 0){
+        echo "Encoded File is : ";
         while ($row = $run->fetch(PDO::FETCH_ASSOC)){
-            echo $row["encodedFile"]."<br>";
+            $encodeFile = $row["encodedFile"];
+
+            echo '
+                <a href="encodedFile/'.$encodeFile.'">'.$encodeFile.'</a>
+            ';
         }
+        echo "(Click to download)";
     }else{
         echo "Sorry no file found";
     }
 }
 
 ?>
-<form method="get" action="">
-    <input type="text" name="file">
-    <input type="submit" name="submit">
-</form>
 
