@@ -9,6 +9,15 @@ include "db.php";
 session_start();
 if(isset($_SESSION["uid"])){
     $uid = $_SESSION["uid"];
+    $sql = "select name from users where id='$uid'";
+    //echo $sql;
+    $run = $conn->prepare($sql);
+    $run->execute();
+    $data = $run->fetch(PDO::FETCH_ASSOC);
+
+    $name = $data["name"];
+
+    echo 'Hi '.$name.', <a href="signout.php">Sign out</a>';
 }else{
     header("location : login.php");
 }
@@ -23,29 +32,30 @@ if(isset($_SESSION["uid"])){
     if(isset($_POST["send"])){
         $sender = $uid;
         $receiver = $_POST["user"];
-
+        $decodePass = $_POST["pass"];
         if  ($_FILES['encodedFile']['size']  ==  0)  {
             die("ERROR:  Zero  byte  file  upload");
         }
-        if  ($_FILES['decodedFile']['size']  ==  0)  {
+        /*if  ($_FILES['decodedFile']['size']  ==  0)  {
             die("ERROR:  Zero  byte  file  upload");
-        }
+        }*/
         //  check  if  this  is  a  valid  upload
         if  (!is_uploaded_file($_FILES['encodedFile']['tmp_name']))   {
             die("ERROR:  Not  a  valid  file  upload");
         }
 
-        if  (!is_uploaded_file($_FILES['decodedFile']['tmp_name']))   {
+        /*if  (!is_uploaded_file($_FILES['decodedFile']['tmp_name']))   {
             die("ERROR:  Not  a  valid  file  upload");
-        }//  set  the  name  of  the  target  directory
+        }//  set  the  name  of  the  target  directory*/
         $uploadDir  =  "./encodedFile/"; //  copy  the  uploaded  file  to  the  directory
-        $uploadDir_d = "./decodedFile/";
+        //$uploadDir_d = "./decodedFile/";
         move_uploaded_file($_FILES['encodedFile']['tmp_name'],  $uploadDir  .  $_FILES['encodedFile']['name'])  or  die("Cannot  copy  uploaded  file"); //  display  success  message
-        move_uploaded_file($_FILES['decodedFile']['tmp_name'],  $uploadDir_d  .  $_FILES['decodedFile']['name'])  or  die("Cannot  copy  uploaded  file"); //  display  success  message
+       // move_uploaded_file($_FILES['decodedFile']['tmp_name'],  $uploadDir_d  .  $_FILES['decodedFile']['name'])  or  die("Cannot  copy  uploaded  file"); //  display  success  message
 
-        echo  "Encoded  "  .  $_FILES['encodedFile']['name']. " to ".$_FILES['decodedFile']['name'];
+        //echo  "Encoded  "  .  $_FILES['encodedFile']['name']. " to ".$_FILES['decodedFile']['name'];
 
-        $sql = "insert into encode(encodedFile, decodedFile, senderId, receiverId) values ('".$_FILES['encodedFile']['name']."', '".$_FILES['decodedFile']['name']."', '$sender', '$receiver')";
+
+        $sql = "insert into encode(encodedFile, decodePass, senderId, receiverId) values ('".$_FILES['encodedFile']['name']."','$decodePass', '$sender', '$receiver')";
         $run = $conn->prepare($sql);
         $run->execute();
     }
@@ -57,8 +67,8 @@ if(isset($_SESSION["uid"])){
     <form action="" method="post" enctype="multipart/form-data">
         <label>Encode this File</label><br>
         <input type="file" name="encodedFile"><br>
-        <label>Decode with this File</label><br>
-        <input type="file" name="decodedFile"><br>
+        <label>Decode with this Password</label><br>
+        <input type="password" name="pass"><br>
         <label>Add a message</label><br>
         <input type="text" name="message"><br>
         <label>Send To : </label><br>
@@ -100,8 +110,10 @@ if(isset($_SESSION["uid"])){
 
                 echo '
                     <p>Message from '.$senderName.'</p>
-                    <img src="decodedFile/'.$decodedFile.'" width="200px" height="200px">
-                    <p><a href="decode.php?file='.$decodedFile.'">Decode this file</a></p>
+                    <form action="decode.php" method="post">
+                        <input type="password" name="pass" required/>
+                        <input type="submit" name="submit" value="Decode with this password">
+                    </form>
                 ';
             }
         }

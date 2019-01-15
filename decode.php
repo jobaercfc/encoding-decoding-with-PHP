@@ -7,10 +7,10 @@
  */
 include "db.php";
 
-if(isset($_GET["file"])){
-    $file = $_GET["file"];
+if(isset($_POST["submit"])){
+    $pass = $_POST["pass"];
 
-    $sql = "Select encodedFile from encode where decodedFile = '$file'";
+    $sql = "Select encodedFile from encode where decodePass = '$pass'";
     $run = $conn->prepare($sql);
     $run->execute();
 
